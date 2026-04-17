@@ -46,7 +46,7 @@ const API = "/api/v1";
 app.use(`${API}/auth`, authRoutes);
 app.use(`${API}/users`, userRoutes);
 app.use(`${API}/vendors`, vendorRoutes);
-// app.use(`${API}/certifications`, certRoutes);
+app.use(`${API}/certifications`, certRoutes);
 // app.use(`${API}/produce`, produceRoutes);
 // app.use(`${API}/orders`, orderRoutes);
 app.use(`${API}/rentals`, rentalRoutes);

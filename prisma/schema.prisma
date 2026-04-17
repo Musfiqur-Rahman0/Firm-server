@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────
+// ENUMS
+// ─────────────────────────────
+
+enum Role {
+  ADMIN
+  VENDOR
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum CertificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum SpaceAvailability {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
+}
+
+// ─────────────────────────────
+// USER
+// ─────────────────────────────
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  password  String
+  role      Role       @default(CUSTOMER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  vendorProfile   VendorProfile?
+  orders          Order[]
+  communityPosts  CommunityPost[]
+  plantTracking   PlantTracking[]
+  rentalBookings  RentalBooking[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────
+// VENDOR PROFILE
+// ─────────────────────────────
+
+model VendorProfile {
+  id                  String              @id @default(uuid())
+  userId              String              @unique
+  farmName            String
+  farmLocation        String
+  farmDescription     String?
+  certificationStatus CertificationStatus @default(PENDING)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  produce             Produce[]
+  rentalSpaces        RentalSpace[]
+  sustainabilityCerts SustainabilityCert[]
+  orders              Order[]
+
+  @@map("vendor_profiles")
+}
+
+// ─────────────────────────────
+// SUSTAINABILITY CERT
+// ─────────────────────────────
+
+model SustainabilityCert {
+  id                String              @id @default(uuid())
+  vendorId          String
+  certifyingAgency  String
+  certificationDate DateTime
+  expiryDate        DateTime?
+  documentUrl       String?
+  status            CertificationStatus @default(PENDING)
+  adminNote         String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@map("sustainability_certs")
+}
+
+// ─────────────────────────────
+// PRODUCE
+// ─────────────────────────────
+
+model Produce {
+  id                  String              @id @default(uuid())
+  vendorId            String
+  name                String
+  description         String?
+  price               Decimal             @db.Decimal(10, 2)
+  category            String
+  certificationStatus CertificationStatus @default(PENDING)
+  availableQuantity   Int                 @default(0)
+  imageUrl            String?
+  isActive            Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  vendor        VendorProfile   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  orders        Order[]
+  plantTracking PlantTracking[]
+
+  @@map("produce")
+}
+
+// ─────────────────────────────
+// ORDER
+// ─────────────────────────────
+
+model Order {
+  id          String      @id @default(uuid())
+  userId      String
+  produceId   String
+  vendorId    String
+  quantity    Int         @default(1)
+  totalPrice  Decimal     @db.Decimal(10, 2)
+  status      OrderStatus @default(PENDING)
+  orderDate   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  notes       String?
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  produce Produce        @relation(fields: [produceId], references: [id], onDelete: Restrict)
+  vendor  VendorProfile  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@map("orders")
+}
+
+// ─────────────────────────────
+// RENTAL SPACE
+// ─────────────────────────────
+
+model RentalSpace {
+  id           String            @id @default(uuid())
+  vendorId     String
+  location     String
+  size         String
+  pricePerDay  Decimal           @db.Decimal(10, 2)
+  availability SpaceAvailability @default(AVAILABLE)
+  description  String?
+  imageUrl     String?
+  amenities    String[]          @default([])
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  vendor   VendorProfile   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  bookings RentalBooking[]
+
+  @@map("rental_spaces")
+}
+
+// ─────────────────────────────
+// RENTAL BOOKING
+// ─────────────────────────────
+
+model RentalBooking {
+  id            String        @id @default(uuid())
+  rentalSpaceId String
+  userId        String
+  startDate     DateTime
+  endDate       DateTime
+  totalPrice    Decimal       @db.Decimal(10, 2)
+  status        BookingStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  rentalSpace RentalSpace @relation(fields: [rentalSpaceId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("rental_bookings")
+}
+
+// ─────────────────────────────
+// COMMUNITY POST
+// ─────────────────────────────
+
+model CommunityPost {
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  postContent String
+  tags        String[] @default([])
+  likesCount  Int      @default(0)
+  isPublished Boolean  @default(true)
+  postDate    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments PostComment[]
+
+  @@map("community_posts")
+}
+
+// ─────────────────────────────
+// POST COMMENT
+// ─────────────────────────────
+
+model PostComment {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("post_comments")
+}
+
+// ─────────────────────────────
+// PLANT TRACKING
+// ─────────────────────────────
+
+model PlantTracking {
+  id            String   @id @default(uuid())
+  userId        String
+  produceId     String
+  plantName     String
+  currentStage  String
+  healthStatus  String
+  notes         String?
+  updatedAt     DateTime @updatedAt
+  expectedHarvestDate DateTime?
+  createdAt     DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  produce Produce @relation(fields: [produceId], references: [id], onDelete: Cascade)
+  updates PlantUpdate[]
+
+  @@map("plant_tracking")
+}
+
+// ─────────────────────────────
+// PLANT UPDATE
+// ─────────────────────────────
+
+model PlantUpdate {
+  id              String        @id @default(uuid())
+  plantTrackingId String
+  stage           String
+  healthStatus    String
+  note            String?
+  createdAt       DateTime      @default(now())
+
+  plantTracking PlantTracking @relation(fields: [plantTrackingId], references: [id], onDelete: Cascade)
+
+  @@map("plant_updates")
+}

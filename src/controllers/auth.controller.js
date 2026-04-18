@@ -27,8 +27,9 @@ exports.register = async (req, res) => {
     });
 
     res.status(201).json({
+      success: true,
       message: "User registered successfully",
-      user,
+      data : user,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -39,6 +40,9 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("Login attempt:", email);
+    console.log("Request body:", req.body);
+
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -48,7 +52,10 @@ exports.login = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Password match:", isMatch);
     if (!isMatch) {
+
+      console.log("ane duke nai");
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
@@ -58,9 +65,17 @@ exports.login = async (req, res) => {
 
     res.status(200).json({
       message: "Login successful",
+      user,
       token,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getMe = async(req, res)=> {
+   res.json({
+    success: true,
+    data: req.user,
+  });
+}

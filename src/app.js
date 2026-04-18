@@ -48,9 +48,9 @@ app.use(`${API}/users`, userRoutes);
 app.use(`${API}/vendors`, vendorRoutes);
 app.use(`${API}/certifications`, certRoutes);
 app.use(`${API}/produce`, produceRoutes);
-// app.use(`${API}/orders`, orderRoutes);
+app.use(`${API}/orders`, orderRoutes);
 app.use(`${API}/rentals`, rentalRoutes);
-// app.use(`${API}/forum`, forumRoutes);
+app.use(`${API}/forum`, forumRoutes);
 app.use(`${API}/plants`, plantRoutes);
 app.use(`${API}/admin`, adminRoutes);
 

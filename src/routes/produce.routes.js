@@ -3,7 +3,7 @@ const router = express.Router();
 
 const produceController = require("../controllers/produce.controller");
 
-console.log("✅ Produce routes loaded");
+console.log(" Produce routes loaded");
 
 router.post("/", produceController.createProduce);
 

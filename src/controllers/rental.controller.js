@@ -104,16 +104,36 @@ exports.deleteRentalSpace = async (req, res) => {
 
 exports.createBookings = async (req, res) => {
   try {
-    const { rentalSpaceId, userId, startDate, totalPrice, endDate } = req.body;
+    const { rentalSpaceId, userId, startDate,  endDate,  } = req.body;
+    
+
+    const space = await prisma.rentalSpace.findUnique({
+      where: { id: rentalSpaceId },
+    })
+    if (!space) {
+      return res.status(404).json({
+        success: false,
+        message: "Rental space not found",
+      });
+    }
+
+     const days = Math.ceil(
+      (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)
+    );
+    const totalPrice = Number(space.pricePerDay) * days;
+
+
     const booking = await prisma.rentalBooking.create({
       data: {
         rentalSpaceId,
         userId,
         startDate: new Date(startDate),
-        endData: new Date(endDate),
+        endDate: new Date(endDate),
         totalPrice,
-      },
-    });
+
+          }
+      
+      });
 
     res.status(201).json({
       success: true,
@@ -131,15 +151,35 @@ exports.createBookings = async (req, res) => {
 exports.getBookings = async (req, res) => {
   try {
     const bookings = await prisma.rentalBooking.findMany({
-      rentalSpace: true,
-      user: true,
+      include: {
+        rentalSpace: {
+          select: {
+            id: true,
+            location: true,
+            pricePerDay: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     res.json({
       success: true,
-      data: booking,
+      data: bookings,
     });
-  } catch (error) {}
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 exports.cancelBooking = async (req, res) => {

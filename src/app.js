@@ -16,6 +16,7 @@ const rentalRoutes = require("./routes/rental.routes");
 const forumRoutes = require("./routes/forum.routes");
 const plantRoutes = require("./routes/plant.routes");
 const adminRoutes = require("./routes/admin.routes");
+const { authenticate } = require("./middlewares/auth");
 
 const app = express();
 
@@ -51,7 +52,7 @@ app.use(`${API}/produce`, produceRoutes);
 app.use(`${API}/orders`, orderRoutes);
 app.use(`${API}/rentals`, rentalRoutes);
 app.use(`${API}/forum`, forumRoutes);
-app.use(`${API}/plants`, plantRoutes);
+app.use(`${API}/plants`, authenticate, plantRoutes);
 app.use(`${API}/admin`, adminRoutes);
 
 // ─── Error Handling ────────────────────────────────────────

@@ -1,16 +1,17 @@
-const prisma = require('../config/prisma');
+const prisma = require("../config/prisma");
 
 exports.createPlantTracking = async (req, res) => {
   try {
     const {
-      userId,
       produceId,
       plantName,
       currentStage,
       healthStatus,
       notes,
-      expectedHarvestDate
+      expectedHarvestDate,
     } = req.body;
+
+    const userId = req.user.id;
 
     const plant = await prisma.plantTracking.create({
       data: {
@@ -20,20 +21,21 @@ exports.createPlantTracking = async (req, res) => {
         currentStage,
         healthStatus,
         notes,
-        expectedHarvestDate: expectedHarvestDate ? new Date(expectedHarvestDate) : null
-      }
+        expectedHarvestDate: expectedHarvestDate
+          ? new Date(expectedHarvestDate)
+          : null,
+      },
     });
 
     res.status(201).json({
       success: true,
       message: "Plant tracking created",
-      data: plant
+      data: plant,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -46,23 +48,22 @@ exports.getAllPlants = async (req, res) => {
           select: {
             id: true,
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         produce: true,
-        updates: true
-      }
+        updates: true,
+      },
     });
 
     res.json({
       success: true,
-      data: plants
+      data: plants,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -74,26 +75,25 @@ exports.getPlant = async (req, res) => {
       include: {
         user: true,
         produce: true,
-        updates: true
-      }
+        updates: true,
+      },
     });
 
     if (!plant) {
       return res.status(404).json({
         success: false,
-        message: "Plant not found"
+        message: "Plant not found",
       });
     }
 
     res.json({
       success: true,
-      data: plant
+      data: plant,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -102,51 +102,44 @@ exports.updatePlant = async (req, res) => {
   try {
     const updated = await prisma.plantTracking.update({
       where: { id: req.params.id },
-      data: req.body
+      data: req.body,
     });
 
     res.json({
       success: true,
       message: "Plant updated",
-      data: updated
+      data: updated,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
 exports.addPlantUpdate = async (req, res) => {
   try {
-    const {
-      plantTrackingId,
-      stage,
-      healthStatus,
-      note
-    } = req.body;
+    const { plantTrackingId, stage, healthStatus, note } = req.body;
 
     const update = await prisma.plantUpdate.create({
       data: {
         plantTrackingId,
         stage,
         healthStatus,
-        note
-      }
+        note,
+      },
     });
 
     res.status(201).json({
       success: true,
       message: "Plant update added",
-      data: update
+      data: update,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -154,18 +147,17 @@ exports.addPlantUpdate = async (req, res) => {
 exports.deletePlant = async (req, res) => {
   try {
     await prisma.plantTracking.delete({
-      where: { id: req.params.id }
+      where: { id: req.params.id },
     });
 
     res.json({
       success: true,
-      message: "Plant deleted"
+      message: "Plant deleted",
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
